@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 
 const CartItem = (props) => {
+    // eslint-disable-next-line
     const [price, setPrice] = useState(props.price);
+    // eslint-disable-next-line
     const [title, setTitle] = useState(props.title);
     const [qty, setQty] = useState(props.qty);
+    // eslint-disable-next-line
     const [img, setImg] = useState(props.img);
 
     const styles = {
@@ -28,7 +31,7 @@ const CartItem = (props) => {
                 {/* Buttons */}
                     <img
                         alt="decrease"
-                        onClick={() => setQty((qty - 1))}
+                        onClick={(qty === 0) ? () => setQty(0) : () => setQty((qty - 1))}   // if qty is 0 set qty to 0 instead of -1, -2, -3, ...
                         className="action-items"
                         src="https://cdn-icons-png.flaticon.com/512/9694/9694621.png"
                     />
