@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 
-const CartItem = (props) => {
+const CartItem = ({details}) => {
     // eslint-disable-next-line
-    const [price, setPrice] = useState(props.price);
+    const [price, setPrice] = useState(details.price);
     // eslint-disable-next-line
-    const [title, setTitle] = useState(props.title);
-    const [qty, setQty] = useState(props.qty);
+    const [title, setTitle] = useState(details.title);
+    const [qty, setQty] = useState(details.qty);
     // eslint-disable-next-line
-    const [img, setImg] = useState(props.img);
+    const [img, setImg] = useState(details.img);
 
     const styles = {
         image: {
