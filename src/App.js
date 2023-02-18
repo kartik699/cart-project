@@ -1,51 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Cart from "./Cart";
 import Navbar from "./Navbar";
+import { collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, orderBy, query, where } from "firebase/firestore";
+import db from "./firebase";
 
 function App() {
-  let [items, setItems] = useState([
-    {
-      price: 10999,
-      title: "Phone",
-      qty: 1,
-      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&q=80",
-      id: 1,
-    },
-    {
-      price: 69999,
-      title: "Laptop",
-      qty: 1,
-      img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1171&q=80",
-      id: 2,
-    },
-    {
-      price: 9999,
-      title: "Watch",
-      qty: 1,
-      img: "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-      id: 3,
-    },
-    {
-      price: 2999,
-      title: "Monitor",
-      qty: 1,
-      img: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-      id: 4,
-    },
-  ]);
+  let [items, setItems] = useState([]);
+  let [loading, setLoading] = useState(true);
+
+  const productsRef = collection(db, 'products');
+  const q = query(productsRef, orderBy('price'));
+
+  useEffect(() => 
+    onSnapshot(q, productsRef, (snapshot) => {
+      setItems(snapshot.docs.map(doc => ({...doc.data(), id: doc.id})));   // returning an object with doc data and id
+      setLoading(false);
+    })
+  , []);
 
   const handleIncreaseQty = (item) => {
     let index = items.indexOf(item);
-    items = items.map((item) => {
-      if (items.indexOf(item) == index) {
-        item.qty += 1;
-        return item;
-      }
 
-      return item;
-    });
-
-    setItems(items);
+    updateDoc(doc(db, `products/${item.id}`), {
+      qty: items[index].qty + 1
+    })
+      .then(() => console.log("Product updated"))
+      .catch(err => console.log(err));
   };
 
   const handleDecreaseQty = (item) => {
@@ -53,21 +33,17 @@ function App() {
 
     if (items[index].qty === 0) return;
 
-    items = items.map((item) => {
-      if (items.indexOf(item) == index) {
-        item.qty -= 1;
-        return item;
-      }
-
-      return item;
-    });
-
-    setItems(items);
+    updateDoc(doc(db, `products/${item.id}`), {
+      qty: items[index].qty - 1
+    })
+      .then(() => console.log("Product updated"))
+      .catch(err => console.log(err));
   };
 
   const handleDeleteItem = (id) => {
-    items = items.filter((item) => item.id !== id);
-    setItems(items);
+    deleteDoc(doc(db, `products/${id}`))
+      .then(() => console.log("product Deleted"))
+      .catch((err) => console.log(err));
   };
 
   const getCartCount = () => {
@@ -86,17 +62,31 @@ function App() {
     items.forEach(item => totalCost += (item.price * item.qty));
 
     return totalCost;
-  }
+  };
+
+  const addProduct = () => {
+    addDoc(collection(db, 'products'), {
+      img: "https://images.unsplash.com/photo-1626806819282-2c1dc01a5e0c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+      title: "Washing Machine",
+      qty: 1,
+      price: 7999
+    })
+    .then(() => console.log("Product Added"))
+    .catch(err => console.log(err));
+  };
 
   return (
     <div className="App">
       <Navbar count={getCartCount()} />
+      {/* adds a new product, hardcoded for now as washing machine */}
+      {/* <button onClick={addProduct} style={{padding: 15, fontSize: 15, borderRadius: 10, cursor: 'pointer'}}>Add a Product</button> */}
       <Cart
       items={items} 
       handleIncreaseQty={handleIncreaseQty}
       handleDecreaseQty={handleDecreaseQty}
       handleDeleteItem={handleDeleteItem}
       />
+      {loading && <h1>Loading Products...</h1>}  {/* loader while products are being fetched from firestore */}
       <div style={{fontSize: 20, padding: 10}}>
         TOTAL: { getCartTotal() }
       </div>
